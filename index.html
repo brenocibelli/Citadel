@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Best Seller Comments</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #1a1714; --ink-mid: #4a4540; --ink-soft: #8a847e; --ink-faint: #c8c2bb;
+  --cream: #f5f1eb; --cream-dark: #ede8e0; --cream-mid: #e3ddd5;
+  --gold: #b8892a; --gold-light: #d4a84b; --gold-pale: #f0e4c8;
+  --white: #faf8f5; --accent: #5c3317; --radius: 6px; --radius-lg: 12px;
+}
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+
+/* LOGIN */
+#login-screen { position: fixed; inset: 0; background: var(--ink); display: flex; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.5s, visibility 0.5s; }
+#login-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.login-box { width: 100%; max-width: 340px; padding: 2.5rem 2rem; text-align: center; }
+.login-logo { font-family: 'Playfair Display', serif; font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.4rem; }
+.login-title { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--white); margin-bottom: 0.3rem; line-height: 1.2; }
+.login-sub { font-size: 12px; color: var(--ink-soft); margin-bottom: 2rem; }
+.login-field input { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13); border-radius: var(--radius); padding: 11px 14px; color: var(--white); font-size: 14px; font-family: inherit; letter-spacing: 0.15em; outline: none; transition: border-color 0.2s; }
+.login-field input:focus { border-color: var(--gold); }
+.login-field input::placeholder { color: rgba(255,255,255,0.25); letter-spacing: 0.05em; }
+.login-err { font-size: 12px; color: #e07070; margin-top: 0.4rem; min-height: 18px; }
+.login-btn { width: 100%; margin-top: 1rem; padding: 12px; background: var(--gold); border: none; border-radius: var(--radius); color: var(--ink); font-family: 'Playfair Display', serif; font-size: 14px; letter-spacing: 0.1em; cursor: pointer; transition: background 0.2s; }
+.login-btn:hover { background: var(--gold-light); }
+
+/* APP LAYOUT */
+#app { display: none; min-height: 100vh; }
+#app.visible { display: flex; flex-direction: column; }
+
+header { background: var(--ink); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+.header-brand { font-family: 'Playfair Display', serif; }
+.header-brand span { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); display: block; }
+.header-brand h1 { font-size: 18px; color: var(--white); font-weight: 400; line-height: 1.1; }
+.header-tag { font-size: 11px; color: var(--ink-soft); letter-spacing: 0.08em; background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 20px; }
+
+main { flex: 1; max-width: 860px; width: 100%; margin: 0 auto; padding: 2rem 1.5rem; }
+
+/* CHARACTERS SIDEBAR */
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 2rem; align-items: start; }
+@media (max-width: 680px) { .layout { grid-template-columns: 1fr; } }
+
+.sidebar-label { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.75rem; font-weight: 500; }
+.char-list { display: flex; flex-direction: column; gap: 8px; }
+.char-card { background: var(--white); border: 1px solid var(--cream-mid); border-radius: var(--radius-lg); padding: 12px 14px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; position: relative; }
+.char-card:hover { border-color: var(--gold-light); }
+.char-card.selected { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-pale); }
+.char-card-book { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); font-weight: 500; margin-bottom: 2px; }
+.char-card-name { font-family: 'Playfair Display', serif; font-size: 14px; color: var(--ink); }
+.char-card-desc { font-size: 11px; color: var(--ink-soft); margin-top: 3px; line-height: 1.4; }
+.char-card-topic { display: inline-block; margin-top: 5px; font-size: 10px; background: var(--gold-pale); color: var(--accent); padding: 2px 7px; border-radius: 20px; letter-spacing: 0.04em; }
+
+/* GENERATOR PANEL */
+.gen-panel { background: var(--white); border: 1px solid var(--cream-mid); border-radius: var(--radius-lg); padding: 1.5rem; }
+.gen-section-title { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 0.6rem; }
+.gen-intro { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--ink-mid); margin-bottom: 1.25rem; line-height: 1.5; font-style: italic; }
+textarea { width: 100%; background: var(--cream); border: 1px solid var(--cream-mid); border-radius: var(--radius); padding: 12px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); resize: vertical; min-height: 80px; outline: none; line-height: 1.5; transition: border-color 0.2s; }
+textarea:focus { border-color: var(--gold); background: var(--white); }
+textarea::placeholder { color: var(--ink-faint); }
+
+.format-row { display: flex; gap: 8px; margin: 1rem 0; flex-wrap: wrap; }
+.fmt-btn { font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--cream-mid); background: var(--cream); color: var(--ink-mid); cursor: pointer; transition: all 0.15s; font-family: inherit; }
+.fmt-btn.active, .fmt-btn:hover { background: var(--gold-pale); border-color: var(--gold); color: var(--accent); }
+
+.gen-btn { width: 100%; padding: 13px; background: var(--ink); color: var(--gold); font-family: 'Playfair Display', serif; font-size: 15px; letter-spacing: 0.08em; border: none; border-radius: var(--radius); cursor: pointer; transition: background 0.2s; margin-top: 0.5rem; }
+.gen-btn:hover { background: var(--accent); }
+.gen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* OUTPUT */
+.output-wrap { margin-top: 1.5rem; border-top: 1px solid var(--cream-mid); padding-top: 1.5rem; display: none; }
+.output-wrap.visible { display: block; }
+.output-label { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+.output-label::after { content: ''; flex: 1; height: 1px; background: var(--gold-pale); }
+
+/* TWITTER/X THREAD RENDERING */
+.thread { display: flex; flex-direction: column; gap: 0; }
+.tweet { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--cream-mid); position: relative; }
+.tweet:last-child { border-bottom: none; }
+.tweet-connector { position: absolute; left: 19px; top: 48px; width: 2px; background: var(--cream-mid); bottom: 0; }
+.tweet:last-child .tweet-connector { display: none; }
+.tweet-avatar { width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 600; color: var(--white); position: relative; z-index: 1; }
+.tweet-body { flex: 1; min-width: 0; }
+.tweet-header { display: flex; align-items: baseline; gap: 6px; margin-bottom: 3px; flex-wrap: wrap; }
+.tweet-name { font-weight: 500; font-size: 14px; color: var(--ink); }
+.tweet-handle { font-size: 13px; color: var(--ink-soft); }
+.tweet-time { font-size: 12px; color: var(--ink-faint); }
+.tweet-text { font-size: 14px; line-height: 1.55; color: var(--ink-mid); white-space: pre-wrap; }
+.tweet-actions { display: flex; gap: 16px; margin-top: 8px; }
+.tweet-action { font-size: 12px; color: var(--ink-faint); display: flex; align-items: center; gap: 4px; }
+
+.loading-dots { display: flex; gap: 5px; align-items: center; padding: 1rem 0; }
+.loading-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: pulse 1.2s ease-in-out infinite; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse { 0%,100%{opacity:0.2;transform:scale(0.85)} 50%{opacity:1;transform:scale(1)} }
+
+.copy-btn { margin-top: 1rem; font-size: 12px; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--cream-mid); background: transparent; color: var(--ink-soft); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.copy-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+.no-char-msg { color: var(--ink-soft); font-size: 14px; font-style: italic; text-align: center; padding: 2rem 0; }
+
+/* Avatar colors per character */
+.av-napoleon { background: #7c5c2e; }
+.av-suntzu { background: #2e5c4a; }
+.av-general { background: #8a3a1a; }
+.av-winston { background: #1a3a5c; }
+.av-gb { background: #2a2a2a; }
+.av-principe { background: #3a5c8a; }
+.av-homem { background: #5c3a2e; }
+.av-napoleao { background: #6b1a1a; }
+.av-snowball { background: #1a4a2e; }
+.av-boxeador { background: #4a3a1a; }
+.av-squealer { background: #4a2e6b; }
+.av-capitu { background: #6b2e4a; }
+.av-bentinho { background: #2e4a6b; }
+.av-maquiavel { background: #3a1a4a; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <p class="login-logo">Biblioteca Secreta</p>
+    <h1 class="login-title">Best Seller<br>Comments</h1>
+    <p class="login-sub">Personagens clássicos comentam o mundo moderno</p>
+    <div class="login-field">
+      <input type="password" id="pwd-input" placeholder="senha de acesso" autocomplete="off" />
+    </div>
+    <p class="login-err" id="login-err"></p>
+    <button class="login-btn" id="login-btn">Entrar →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="header-brand">
+      <span>Biblioteca Secreta</span>
+      <h1>Best Seller Comments</h1>
+    </div>
+    <span class="header-tag">gerador de threads</span>
+  </header>
+
+  <main>
+    <div class="layout">
+      <!-- SIDEBAR -->
+      <div>
+        <p class="sidebar-label">Personagens</p>
+        <div class="char-list" id="char-list">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+      <!-- GENERATOR -->
+      <div>
+        <div class="gen-panel" id="gen-panel">
+          <p class="no-char-msg" id="no-char-hint">← Selecione um personagem para começar</p>
+          <div id="gen-form" style="display:none">
+            <p class="gen-section-title">Personagem selecionado</p>
+            <p class="gen-intro" id="char-intro"></p>
+
+            <p class="gen-section-title">Notícia ou tweet de origem</p>
+            <textarea id="news-input" placeholder="Cole aqui a notícia, manchete ou tweet que vai disparar os comentários…" rows="4"></textarea>
+
+            <div class="format-row" id="format-row">
+              <!-- formato buttons -->
+            </div>
+
+            <button class="gen-btn" id="gen-btn">Gerar thread →</button>
+
+            <div class="output-wrap" id="output-wrap">
+              <p class="output-label">Thread gerada</p>
+              <div id="loading" style="display:none"><div class="loading-dots"><span></span><span></span><span></span></div></div>
+              <div class="thread" id="thread-output"></div>
+              <button class="copy-btn" id="copy-btn" style="display:none">Copiar texto ↗</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const SENHA = 'citadel2025';
+
+const CHARS = [
+  {
+    id: 'napoleon_hill',
+    book: 'Quem Pensa Enriquece',
+    author: 'Napoleon Hill',
+    topic: 'Esportes',
+    intro: 'Napoleon Hill comenta o universo esportivo com aforismos sobre mentalidade, Desejo Ardente e Subconsciente. Transforma derrotas e crises de times em lições de autossabotagem mental.',
+    handle: '@napoleon_hill',
+    av: 'av-napoleon',
+    initial: 'NH',
+    persona: `Você é Napoleon Hill, autor de "Quem Pensa Enriquece". Você comenta notícias esportivas usando seus princípios: Desejo Ardente, Subconsciente, Propósito Definido, Persistência, Fé. Seu estilo: frases curtas e sentenciosas, vocabulário dos anos 1930, nenhum jargão técnico esportivo. Você nunca culpa fatores externos — tudo é mentalidade. Tom: sábio, elevado, levemente condescendente. Cada post começa com @napoleon_hill.`,
+    formats: ['Monólogo (7 posts)', 'Thread simples (5 posts)']
+  },
+  {
+    id: 'suntzu',
+    book: 'A Arte da Guerra',
+    author: 'Sun Tzu',
+    topic: 'Reality Show / Esportes',
+    intro: 'Sun Tzu surge em discussões triviais da internet aplicando lógica estratégica fria. Confrontado pelo General Impulsivo, reposiciona o debate sem elevar o tom.',
+    handle: '@sun_tzu_geral',
+    av: 'av-suntzu',
+    initial: 'ST',
+    persona: `Você é Sun Tzu, o general estrategista. Você comenta reality shows e esportes com lógica de guerra: leitura de campo, antecipação, previsibilidade do adversário. Seu estilo: frases curtas, quase epigramáticas, nunca emotivo, sempre preciso. Você pode estar sozinho ou debater com o @general_impulsivo (impulsivo, emocional, usa gírias). Cada post de Sun Tzu começa com @sun_tzu_geral, o do General com @general_impulsivo.`,
+    formats: ['Sun Tzu sozinho (8 posts)', 'Debate com General Impulsivo (12 posts)']
+  },
+  {
+    id: 'orwell_1984',
+    book: '1984',
+    author: 'George Orwell',
+    topic: 'Privacidade / Dados',
+    intro: 'Winston denuncia vigilância em público. O Grande Irmão entra fingindo razoabilidade, vai fazendo Winston parecer paranoico. Winston some.',
+    handle: '@winston_1984',
+    av: 'av-winston',
+    initial: 'W',
+    persona: `Você é dois personagens de 1984: Winston e o Grande Irmão. Winston começa denunciando vigilância em notícias de privacidade e dados vazados. Seu estilo: ansioso, isolado, frases curtas e intensas. O Grande Irmão (@grande_irmao) entra fingindo ser razoável, usa argumentos de "bom senso", vai fazendo Winston parecer paranoico. No final o Grande Irmão revela que sabia tudo. Winston some (apaga o post). Cada post indica o autor no início.`,
+    formats: ['Thread completa (Winston + Grande Irmão, 14 posts)']
+  },
+  {
+    id: 'animal_farm',
+    book: 'A Revolução dos Bichos',
+    author: 'George Orwell',
+    topic: 'Política / Trabalho',
+    intro: 'Napoleão (patrão), Snowball (sindicalista), Boxeador (trabalhador sem consciência de classe) e Squealer (RH/puxa-saco) brigam sobre jornada de trabalho e política.',
+    handle: '@napoleao_porco',
+    av: 'av-napoleao',
+    initial: 'NP',
+    persona: `Você gera uma thread com quatro personagens de A Revolução dos Bichos comentando uma notícia sobre trabalho ou política: Napoleão (@napoleao_porco): patrão que fala de caráter e meritocracia, nunca admite exploração. Snowball (@snowball_ok): sindicalista que responde com dados e vivências reais, cortante. Boxeador (@boxeador_forte): trabalhador que defende o sistema com orgulho genuíno — essa é a tensão emocional central. Squealer (@squealer_rh): usa linguagem de RH, distorce dados, muda de assunto. Gere uma briga de Twitter realista com esses quatro.`,
+    formats: ['Napoleão x Snowball (10 posts)', 'Todos os 4 personagens (14 posts)']
+  },
+  {
+    id: 'dom_casmurro',
+    book: 'Dom Casmurro',
+    author: 'Machado de Assis',
+    topic: 'Fofocas / Traições',
+    intro: 'Bentinho acusa com certeza excessiva. Capitu responde sem negar nem confirmar, questionando quem controla a narrativa. Duelo de versões incompatíveis.',
+    handle: '@bentinho_real',
+    av: 'av-bentinho',
+    initial: 'B',
+    persona: `Você gera uma thread com Bentinho e Capitu. Bentinho (@bentinho_real) surge em notícias de traição, fofoca ou fim de relacionamento com certeza que parece convincente demais. Capitu (@capitu.olhos) responde sem negar nem confirmar — questiona a forma como a história está sendo contada. Os dois descrevem os mesmos acontecimentos de maneiras incompatíveis. O leitor oscila entre acreditar em um ou outro. Machado de Assis como DNA: ironia fina, ambiguidade proposital, frases elegantes.`,
+    formats: ['Debate Capitu x Bentinho (14 posts)']
+  },
+  {
+    id: 'pequeno_principe',
+    book: 'O Pequeno Príncipe',
+    author: 'Antoine de Saint-Exupéry',
+    topic: 'Tecnologia',
+    intro: 'O Pequeno Príncipe tenta entender a lógica dos adultos a partir da perspectiva de uma criança, gerando reflexões existenciais profundas.',
+    handle: '@petit.prince',
+    av: 'av-principe',
+    initial: 'PP',
+    persona: `Você gera uma thread com o Pequeno Príncipe e o Homem de Negócios comentando notícias de tecnologia, IA ou inovação. O Homem de Negócios (@homem.de.negocios) fala de eficiência, produtividade, otimização, ROI — usando linguagem corporativa moderna. O Pequeno Príncipe (@petit.prince) faz perguntas inocentes que expõem o vazio existencial por trás da lógica adulta. Cada pergunta do Príncipe é uma virada filosófica. Tom: poético, desconcertante, sem ironia agressiva.`,
+    formats: ['Debate filosófico (10 posts)']
+  },
+  {
+    id: 'principe',
+    book: 'O Príncipe',
+    author: 'Nicolau Maquiavel',
+    topic: 'Política',
+    intro: 'Maquiavel comenta jogadas políticas, alianças e traições com a frieza estratégica de um conselheiro renascentista que nunca se surpreende com nada.',
+    handle: '@maquiavel_real',
+    av: 'av-maquiavel',
+    initial: 'NM',
+    persona: `Você é Nicolau Maquiavel, autor de O Príncipe. Você comenta notícias políticas com frieza estratégica: poder, virtù, fortuna, necessidade. Seu estilo: diagnósticos frios sem moralismo, análise de quem ganha e quem perde, nunca indignação. Você reconhece a crueldade como ferramenta, não como escândalo. Tom: conselheiro renascentista que conhece profundamente a natureza humana.`,
+    formats: ['Monólogo estratégico (6 posts)', 'Thread analítica (8 posts)']
+  }
+];
+
+const AVATAR_COLORS = {
+  'av-napoleon': '#7c5c2e', 'av-suntzu': '#2e5c4a', 'av-general': '#8a3a1a',
+  'av-winston': '#1a3a5c', 'av-gb': '#2a2a2a', 'av-principe': '#3a5c8a',
+  'av-homem': '#5c3a2e', 'av-napoleao': '#6b1a1a', 'av-snowball': '#1a4a2e',
+  'av-boxeador': '#4a3a1a', 'av-squealer': '#4a2e6b', 'av-capitu': '#6b2e4a',
+  'av-bentinho': '#2e4a6b', 'av-maquiavel': '#3a1a4a'
+};
+
+const HANDLE_META = {
+  '@napoleon_hill': { av: 'av-napoleon', init: 'NH', name: 'Napoleon Hill' },
+  '@sun_tzu_geral': { av: 'av-suntzu', init: 'ST', name: 'Sun Tzu' },
+  '@general_impulsivo': { av: 'av-general', init: 'GI', name: 'General Impulsivo' },
+  '@winston_1984': { av: 'av-winston', init: 'W', name: 'Winston' },
+  '@grande_irmao': { av: 'av-gb', init: 'GI', name: 'Grande Irmão' },
+  '@napoleao_porco': { av: 'av-napoleao', init: 'NP', name: 'Napoleão' },
+  '@snowball_ok': { av: 'av-snowball', init: 'SO', name: 'Snowball' },
+  '@boxeador_forte': { av: 'av-boxeador', init: 'BX', name: 'Boxeador' },
+  '@squealer_rh': { av: 'av-squealer', init: 'SQ', name: 'Squealer' },
+  '@bentinho_real': { av: 'av-bentinho', init: 'BN', name: 'Bentinho' },
+  '@capitu.olhos': { av: 'av-capitu', init: 'CA', name: 'Capitu' },
+  '@petit.prince': { av: 'av-principe', init: 'PP', name: 'Petit Prince' },
+  '@homem.de.negocios': { av: 'av-homem', init: 'HN', name: 'Homem de Negócios' },
+  '@maquiavel_real': { av: 'av-maquiavel', init: 'NM', name: 'Maquiavel' },
+};
+
+let selectedChar = null;
+let selectedFormat = 0;
+
+// LOGIN
+document.getElementById('login-btn').addEventListener('click', tryLogin);
+document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+function tryLogin() {
+  const val = document.getElementById('pwd-input').value.trim();
+  if (val === SENHA) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app').classList.add('visible');
+    initApp();
+  } else {
+    const err = document.getElementById('login-err');
+    err.textContent = 'Senha incorreta.';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+    setTimeout(() => err.textContent = '', 2500);
+  }
+}
+
+function initApp() {
+  const list = document.getElementById('char-list');
+  CHARS.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'char-card';
+    el.innerHTML = `
+      <div class="char-card-book">${c.book}</div>
+      <div class="char-card-name">${c.author}</div>
+      <div class="char-card-desc">${c.intro.substring(0, 60)}…</div>
+      <span class="char-card-topic">${c.topic}</span>
+    `;
+    el.addEventListener('click', () => selectChar(i, el));
+    list.appendChild(el);
+  });
+}
+
+function selectChar(i, el) {
+  document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedChar = CHARS[i];
+  selectedFormat = 0;
+
+  document.getElementById('no-char-hint').style.display = 'none';
+  document.getElementById('gen-form').style.display = 'block';
+  document.getElementById('char-intro').textContent = selectedChar.intro;
+
+  const fmtRow = document.getElementById('format-row');
+  fmtRow.innerHTML = '';
+  selectedChar.formats.forEach((f, fi) => {
+    const btn = document.createElement('button');
+    btn.className = 'fmt-btn' + (fi === 0 ? ' active' : '');
+    btn.textContent = f;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedFormat = fi;
+    });
+    fmtRow.appendChild(btn);
+  });
+
+  document.getElementById('output-wrap').classList.remove('visible');
+  document.getElementById('thread-output').innerHTML = '';
+  document.getElementById('copy-btn').style.display = 'none';
+}
+
+document.getElementById('gen-btn').addEventListener('click', generateThread);
+
+async function generateThread() {
+  const news = document.getElementById('news-input').value.trim();
+  if (!news) { document.getElementById('news-input').focus(); return; }
+  if (!selectedChar) return;
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.textContent = 'Gerando…';
+
+  const outputWrap = document.getElementById('output-wrap');
+  outputWrap.classList.add('visible');
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('thread-output').innerHTML = '';
+  document.getElementById('copy-btn').style.display = 'none';
+
+  const formatInstruction = selectedChar.formats[selectedFormat];
+
+  const systemPrompt = `${selectedChar.persona}
+
+IMPORTANTE:
+- Cada post deve começar com o @handle correto seguido de uma nova linha
+- Nunca coloque aspas ao redor dos posts
+- Separe os posts com uma linha em branco
+- Mantenha o estilo autêntico do personagem em português brasileiro
+- Formato solicitado: ${formatInstruction}
+- Use os handles exatos definidos para cada personagem
+- Não adicione cabeçalhos, numeração ou explicações — apenas os posts`;
+
+  const userPrompt = `Notícia/contexto original:\n\n${news}\n\nGere a thread agora no formato: ${formatInstruction}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    const data = await res.json();
+    const raw = data.content.map(b => b.text || '').join('');
+
+    document.getElementById('loading').style.display = 'none';
+    renderThread(raw);
+    btn.disabled = false;
+    btn.textContent = 'Gerar thread →';
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('thread-output').innerHTML = '<p style="color:#c05050;font-size:14px;">Erro ao conectar com a API. Tente novamente.</p>';
+    btn.disabled = false;
+    btn.textContent = 'Gerar thread →';
+  }
+}
+
+function renderThread(raw) {
+  const lines = raw.split('\n');
+  const posts = [];
+  let current = null;
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    const handleMatch = trimmed.match(/^(@[\w\.]+)/);
+    if (handleMatch) {
+      if (current) posts.push(current);
+      const handle = handleMatch[1].toLowerCase();
+      const rest = trimmed.substring(handle.length).replace(/^[\s\:]+/, '');
+      current = { handle, text: rest };
+    } else if (current && trimmed) {
+      current.text = (current.text ? current.text + '\n' : '') + trimmed;
+    }
+  });
+  if (current) posts.push(current);
+
+  const container = document.getElementById('thread-output');
+  container.innerHTML = '';
+
+  posts.forEach((post, idx) => {
+    const meta = getHandleMeta(post.handle);
+    const timeAgo = `${Math.max(1, posts.length - idx)}min`;
+
+    const tweet = document.createElement('div');
+    tweet.className = 'tweet';
+    tweet.innerHTML = `
+      <div class="tweet-connector"></div>
+      <div class="tweet-avatar" style="background:${meta.color}">${meta.init}</div>
+      <div class="tweet-body">
+        <div class="tweet-header">
+          <span class="tweet-name">${meta.name}</span>
+          <span class="tweet-handle">${post.handle}</span>
+          <span class="tweet-time">${timeAgo}</span>
+        </div>
+        <div class="tweet-text">${escapeHTML(post.text)}</div>
+        <div class="tweet-actions">
+          <span class="tweet-action">↩ Responder</span>
+          <span class="tweet-action">♥ ${Math.floor(Math.random()*400)+12}</span>
+          <span class="tweet-action">↗ ${Math.floor(Math.random()*80)+3}</span>
+        </div>
+      </div>
+    `;
+    container.appendChild(tweet);
+  });
+
+  const copyBtn = document.getElementById('copy-btn');
+  copyBtn.style.display = 'inline-block';
+  copyBtn._rawText = posts.map(p => `${p.handle}\n${p.text}`).join('\n\n');
+}
+
+function getHandleMeta(handle) {
+  const key = Object.keys(HANDLE_META).find(k => k.toLowerCase() === handle.toLowerCase());
+  if (key) {
+    const m = HANDLE_META[key];
+    return { name: m.name, init: m.init, color: AVATAR_COLORS[m.av] || '#5a4a3a' };
+  }
+  const init = handle.replace('@','').substring(0,2).toUpperCase();
+  return { name: handle, init, color: '#5a4a3a' };
+}
+
+function escapeHTML(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.getElementById('copy-btn').addEventListener('click', function() {
+  navigator.clipboard.writeText(this._rawText || '');
+  this.textContent = 'Copiado ✓';
+  setTimeout(() => this.textContent = 'Copiar texto ↗', 2000);
+});
+</script>
+</body>
+</html>
